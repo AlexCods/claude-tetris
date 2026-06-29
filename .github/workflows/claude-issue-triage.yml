@@ -1,0 +1,55 @@
+name: Claude Issue Triage
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Triage issue with Claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            You are an issue triage assistant for a vanilla JavaScript Tetris game.
+            A GitHub issue has just been opened or updated. Your job is two things:
+
+            1. **Assign labels** to the issue using `gh issue edit ${{ github.event.issue.number }} --add-label "<label>"`.
+               Choose from these labels (create them if they don't exist using `gh label create`):
+               - `bug` — something is broken or behaving incorrectly
+               - `enhancement` — improving an existing feature
+               - `feature` — a new capability not yet in the game
+               - `game-logic` — relates to piece movement, rotation, collision, line clears, scoring
+               - `ui` — visual/canvas rendering, colors, layout, overlays
+               - `performance` — frame rate, requestAnimationFrame, rendering speed
+               - `question` — asking how something works, not necessarily a problem
+               - `duplicate` — clearly duplicates another open issue
+               - `invalid` — off-topic or not actionable
+
+            2. **Post a diagnostic comment** on the issue using `gh issue comment ${{ github.event.issue.number }} --body "<comment>"`.
+               The comment must include:
+               - **Summary**: one-sentence restatement of the problem/request
+               - **Affected area**: which part of the codebase is most likely involved (reference specific functions or constants from game.js if applicable, e.g. `lockPiece()`, `tryRotate()`, `clearLines()`, `LINE_SCORES`, `dropInterval`)
+               - **Root cause hypothesis**: your best technical guess at what causes the issue (or what would need to change for a feature request)
+               - **Implementation hints**: concrete starting points for a developer — file names, line ranges, functions to touch, edge cases to watch for
+               - **Acceptance criteria**: 2–4 bullet points describing what "done" looks like for this issue
+
+            The issue details are:
+            - Title: ${{ github.event.issue.title }}
+            - Body: ${{ github.event.issue.body }}
+            - Issue number: #${{ github.event.issue.number }}
+            - Repository: ${{ github.repository }}
+
+            Use `gh` CLI for all GitHub operations. Do not modify any source files.
