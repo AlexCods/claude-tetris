@@ -11,7 +11,7 @@ const COLORS = [
   '#ba68c8', // T - purple
   '#81c784', // S - green
   '#e57373', // Z - red
-  '#7986cb', // J - indigo
+  '#90caf9', // J - pale blue
   '#ffb74d', // L - orange
 ];
 
@@ -39,6 +39,22 @@ const overlay = document.getElementById('overlay');
 const overlayTitle = document.getElementById('overlay-title');
 const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
+const themeToggleBtn = document.getElementById('theme-toggle');
+
+(function initTheme() {
+  const saved = localStorage.getItem('tetris-theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const isDark = saved ? saved === 'dark' : prefersDark;
+  document.documentElement.dataset.theme = isDark ? 'dark' : 'light';
+  themeToggleBtn.textContent = isDark ? '☀️' : '🌙';
+})();
+
+themeToggleBtn.addEventListener('click', () => {
+  const isDark = document.documentElement.dataset.theme === 'dark';
+  document.documentElement.dataset.theme = isDark ? 'light' : 'dark';
+  themeToggleBtn.textContent = isDark ? '🌙' : '☀️';
+  localStorage.setItem('tetris-theme', isDark ? 'light' : 'dark');
+});
 
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
 
@@ -169,7 +185,7 @@ function drawBlock(context, x, y, colorIndex, size, alpha) {
 }
 
 function drawGrid() {
-  ctx.strokeStyle = '#22222e';
+  ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--grid-color').trim();
   ctx.lineWidth = 0.5;
   for (let c = 1; c < COLS; c++) {
     ctx.beginPath();
